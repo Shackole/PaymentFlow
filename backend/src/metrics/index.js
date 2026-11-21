@@ -20,7 +20,7 @@ new client.Gauge({
         Student.aggregate([
           { $match: { deletedAt: null } },
           { $group: { _id: '$schoolId', count: { $sum: 1 } } },
-        ]),
+        ]).option({ _bypassTenantScope: true }),
       ]);
       const bySchool = new Map(counts.map(({ _id, count }) => [_id, count]));
       this.reset();

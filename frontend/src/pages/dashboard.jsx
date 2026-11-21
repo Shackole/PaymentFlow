@@ -466,6 +466,9 @@ function Dashboard() {
           <section className="card" aria-label="Student quota" style={{ marginBottom: "1rem" }}>
             <strong>Student quota</strong>
             <p>{summary.studentQuota.used} students {summary.studentQuota.limit === null ? "· Unlimited" : `of ${summary.studentQuota.limit}`} · {summary.studentQuota.tier}</p>
+            {summary.studentQuota.limit !== null && summary.studentQuota.used >= summary.studentQuota.limit && (
+              <a href={summary.studentQuota.upgrade_url}>Upgrade student capacity</a>
+            )}
           </section>
         )}
 

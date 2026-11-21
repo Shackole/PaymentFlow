@@ -10,7 +10,7 @@ const { encryptStudentPii, decryptStudentPii, hashParentEmail } = require('../se
 const { encodeListCursor, decodeListCursor, cursorCondition } = require('../utils/listCursor');
 const { validateDecimalAmount } = require('../utils/decimalPrecision');
 
-const { quotaUsage, quotaExceeded } = require('../services/studentQuotaService');
+const { studentLimit, quotaUsage, quotaExceeded, upgradeUrl } = require('../services/studentQuotaService');
 
 async function registerStudent(req, res, next) {
   // Declared in the function scope (not inside try) so the 11000 duplicate-key
@@ -570,8 +570,12 @@ async function getPaymentSummary(req, res, next) {
 
     const counts = summary.reduce((acc, s) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; }, {});
 
-    const { studentLimit } = require('../services/studentQuotaService');
-    const studentQuota = { used: students.length, limit: studentLimit(req.school), tier: req.school.subscriptionTier || 'free' };
+    const studentQuota = {
+      used: students.length,
+      limit: studentLimit(req.school),
+      tier: req.school?.subscriptionTier || 'free',
+      upgrade_url: upgradeUrl,
+    };
     res.json({ total: students.length, counts, students: summary, studentQuota });
   } catch (err) {
     next(err);

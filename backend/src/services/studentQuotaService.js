@@ -5,7 +5,9 @@ const { withLock } = require('./distributedLock');
 
 const limits = { free: 100, standard: 1000, enterprise: null };
 
-function studentLimit(school) {
+const upgradeUrl = process.env.STUDENT_QUOTA_UPGRADE_URL || '/billing/upgrade';
+
+function studentLimit(school = {}) {
   if (school.studentQuota != null) return school.studentQuota;
   if (school.maxStudents != null && school.maxStudents !== 10000) return school.maxStudents;
   return limits[school.subscriptionTier || 'free'];
@@ -16,7 +18,7 @@ async function quotaUsage(school) {
     tier: school.subscriptionTier || 'free',
     limit: studentLimit(school),
     used: await Student.countDocuments({ schoolId: school.schoolId, deletedAt: null }),
-    upgrade_url: process.env.STUDENT_QUOTA_UPGRADE_URL || '/billing/upgrade',
+    upgrade_url: upgradeUrl,
   };
 }
 
@@ -37,4 +39,4 @@ async function withStudentQuotaLock(schoolId, fn) {
   return acquired.result;
 }
 
-module.exports = { studentLimit, quotaUsage, quotaExceeded, withStudentQuotaLock };
+module.exports = { studentLimit, upgradeUrl, quotaUsage, quotaExceeded, withStudentQuotaLock };
