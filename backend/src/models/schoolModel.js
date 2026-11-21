@@ -57,6 +57,8 @@ const schoolSchema = new mongoose.Schema(
     syncCursor:     { type: String, default: null },
     adminEmail:     { type: String, default: null },
     address:        { type: String, default: null },
+    financeEmail: { type: String, default: null, trim: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    settlementInitialBalanceXlm: { type: String, default: '0', match: /^[0-9]{1,12}(?:\.[0-9]{1,7})?$/ },
     /**
      * Contact email for the school. Used for reminder emails, receipts, and admin notifications.
      * Must be a valid email format.
