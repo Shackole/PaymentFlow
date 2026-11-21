@@ -8,11 +8,13 @@ const expression = process.env.RECONCILIATION_CRON || '55 23 * * *';
 const MAX_TIMEOUT_MS = 2147483647;
 let timer;
 let leader = false;
+let generation = 0;
 
-function schedule() {
+function schedule(currentGeneration) {
   const next = parseExpression(expression, { tz: 'UTC' }).next().getTime();
   const delay = Math.max(0, next - Date.now());
   timer = setTimeout(async () => {
+    if (currentGeneration !== generation) return;
     try {
       if (delay <= MAX_TIMEOUT_MS) {
         await runDailySettlementReconciliation({ day: new Date(next).toISOString().slice(0, 10) });
@@ -20,7 +22,7 @@ function schedule() {
     } catch (err) {
       logger.error('Settlement reconciliation scheduler failed', { error: err.message });
     } finally {
-      if (leader) schedule();
+      if (leader && currentGeneration === generation) schedule(currentGeneration);
     }
   }, Math.min(delay, MAX_TIMEOUT_MS));
   timer.unref?.();
@@ -29,7 +31,7 @@ function schedule() {
 function startReconciliationReportScheduler() {
   if (leader) return;
   try {
-    schedule();
+    schedule(++generation);
     leader = true;
     logger.info('Settlement reconciliation scheduled', { expression, timezone: 'UTC' });
   } catch (err) {
@@ -39,6 +41,7 @@ function startReconciliationReportScheduler() {
 
 function stopReconciliationReportScheduler() {
   leader = false;
+  generation++;
   clearTimeout(timer);
   timer = undefined;
 }

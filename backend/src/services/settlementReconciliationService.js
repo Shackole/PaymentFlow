@@ -176,14 +176,22 @@ async function deliverReport(report) {
 }
 
 async function runDailySettlementReconciliation({ day = new Date().toISOString().slice(0, 10) } = {}) {
-  const schools = await School.find({ isActive: true }).lean();
+  const schools = await School.find({ isActive: true }).select('+financeEmail +settlementInitialBalanceXlm').lean();
   const reports = [];
   for (const school of schools) {
     const { schoolId } = school;
     try {
       const run = await withLock(`settlement:${schoolId}:${day}`, 60000, async () => {
-        const existing = await SettlementReport.findOne({ schoolId, day }).lean();
-        const report = existing || await createDailyReport(school, day);
+        let report = await SettlementReport.findOne({ schoolId, day }).lean();
+        if (!report) {
+          try {
+            report = await createDailyReport(school, day);
+          } catch (err) {
+            if (err.code !== 11000) throw err;
+            report = await SettlementReport.findOne({ schoolId, day }).lean();
+            if (!report) throw err;
+          }
+        }
         await deliverReport(report);
         return report;
       });

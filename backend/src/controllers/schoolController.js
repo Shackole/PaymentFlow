@@ -264,7 +264,10 @@ async function updateSchool(req, res, next) {
       updates.classOptions = updates.classOptions.map(opt => opt.trim());
     }
 
-    const original = await School.findOne({ slug: req.params.schoolSlug.toLowerCase(), isActive: true }).lean();
+    const { schoolId, schoolSlug } = req.params;
+    const slug = (schoolSlug || schoolId).toLowerCase();
+    const original = (schoolId && await School.findOne({ schoolId, isActive: true }).lean())
+      || await School.findOne({ slug, isActive: true }).lean();
     if (!original) {
       const e = new Error('School not found');
       e.code = 'NOT_FOUND';
@@ -279,10 +282,14 @@ async function updateSchool(req, res, next) {
     }
 
     const school = await School.findOneAndUpdate(
-      { slug: req.params.schoolSlug.toLowerCase(), isActive: true },
+      { schoolId: original.schoolId, isActive: true },
       updates,
       { new: true, runValidators: true }
     );
+
+    if (!school) {
+      return res.status(404).json({ error: 'Active school not found', code: 'NOT_FOUND' });
+    }
 
     // Drop the stale lean copy on every replica so the rotated address /
     // changed config is served within seconds, not after the 5-minute TTL.

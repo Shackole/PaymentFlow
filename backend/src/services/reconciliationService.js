@@ -53,7 +53,7 @@ async function reconcileAll(schoolId) {
 
     while (true) {
       // Fetch next batch of students
-      const students = await Student.find(baseQuery)
+      const students = await Student.find(baseQuery, null, schoolId ? {} : { _bypassTenantScope: true })
         .sort({ _id: 1 })
         .limit(BATCH_SIZE)
         .lean();
