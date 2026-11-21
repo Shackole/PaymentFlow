@@ -60,8 +60,12 @@ export default function StudentForm({ student, onClose, onSave, onOptimisticUpda
     setLoading(true);
 
     try {
-      onOptimisticUpdate?.(student.studentId, formData);
-      await updateStudent(student.studentId, formData);
+      const updates = { ...formData };
+      for (const field of ["reminderOptOut", "paymentConfirmationOptOut", "disputeUpdateOptOut"]) {
+        if (updates[field] === Boolean(student[field])) delete updates[field];
+      }
+      onOptimisticUpdate?.(student.studentId, updates);
+      await updateStudent(student.studentId, updates);
       setSuccess(t("studentForm.updateSuccess"));
       setTimeout(() => {
         if (onSave) onSave();

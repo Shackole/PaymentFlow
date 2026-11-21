@@ -187,7 +187,7 @@ jest.mock('../backend/src/services/auditService', () => ({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const request = require('supertest');
-const { generateUnsubscribeToken } = require('../backend/src/utils/unsubscribeToken');
+const { generateUnsubscribeToken, generateEmailUnsubscribeToken } = require('../backend/src/utils/unsubscribeToken');
 const app = require('../backend/src/app');
 
 const JWT_SECRET = 'test-secret-32-chars-xxxxxxxxxxx';
@@ -314,6 +314,14 @@ describe('GET /api/reminders/unsubscribe — XSS regression (stored XSS via stud
       .set('X-School-ID', SCHOOL_ID);
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('code', 'VALIDATION_ERROR');
+  });
+
+  test('a signed category cannot be changed in the public link', async () => {
+    const token = generateEmailUnsubscribeToken(STUDENT_ID, SCHOOL_ID, 'payment_confirmation', JWT_SECRET);
+    const res = await request(app).get('/unsubscribe').query({ token, type: 'dispute_update' });
+
+    expect(res.status).toBe(400);
+    expect(Student.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   test('invalid/tampered token returns 400', async () => {

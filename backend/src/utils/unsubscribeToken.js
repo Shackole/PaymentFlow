@@ -32,27 +32,22 @@ function generateUnsubscribeToken(studentId, schoolId, secret) {
  */
 function verifyUnsubscribeToken(token, secret) {
   try {
-    const parts = token.split('.');
-    if (parts.length !== 4) {
-      return { valid: false, error: 'Invalid token format' };
-    }
+    const parts = typeof token === 'string' && token.length <= 1024
+      ? /^([1-9][0-9]{0,11})\.([0-9a-f]{64})\.([A-Za-z0-9+/]+={0,2})\.([A-Za-z0-9+/]+={0,2})$/.exec(token)
+      : null;
+    if (!parts) return { valid: false, error: 'Invalid token format' };
 
-    const [timestampStr, signature, studentIdB64, schoolIdB64] = parts;
-    const timestamp = parseInt(timestampStr, 10);
-
-    if (!Number.isFinite(timestamp)) {
-      return { valid: false, error: 'Invalid timestamp' };
-    }
-
-    // Check expiry (90 days)
-    const now = Math.floor(Date.now() / 1000);
-    const expirySeconds = TOKEN_EXPIRY_DAYS * 24 * 60 * 60;
-    if (now - timestamp > expirySeconds) {
-      return { valid: false, error: 'Token expired' };
-    }
+    const [, timestampStr, signature, studentIdB64, schoolIdB64] = parts;
+    const timestamp = Number(timestampStr);
+    const age = Math.floor(Date.now() / 1000) - timestamp;
+    if (age < 0) return { valid: false, error: 'Invalid timestamp' };
+    if (age > TOKEN_EXPIRY_DAYS * 86400) return { valid: false, error: 'Token expired' };
 
     const studentId = Buffer.from(studentIdB64, 'base64').toString('utf8');
     const schoolId = Buffer.from(schoolIdB64, 'base64').toString('utf8');
+    if (Buffer.from(studentId).toString('base64') !== studentIdB64 || Buffer.from(schoolId).toString('base64') !== schoolIdB64) {
+      return { valid: false, error: 'Invalid token format' };
+    }
 
     const data = `${studentId}:${schoolId}:${timestamp}`;
     const expectedSignature = crypto.createHmac('sha256', secret).update(data).digest('hex');

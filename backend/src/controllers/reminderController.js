@@ -195,16 +195,14 @@ async function unsubscribeViaToken(req, res, next) {
     const safeStudentId = escapeHtml(student.studentId);
     const html = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Unsubscribed</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 40px; }
-          .success { color: green; }
-        </style>
       </head>
       <body>
-        <h1 class="success">&#x2713; Unsubscribed</h1>
+        <h1>Unsubscribed</h1>
         <p>You have been unsubscribed from these email updates for student <strong>${safeName}</strong> (ID: ${safeStudentId}).</p>
         <p>You can resubscribe at any time by contacting your school administrator.</p>
       </body>
