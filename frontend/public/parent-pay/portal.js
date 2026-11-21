@@ -1,7 +1,7 @@
 'use strict';
 
 const el = (id) => document.getElementById(id);
-const status = (message) => { el('status').textContent = message; };
+const setStatus = (message) => { el('status').textContent = message; };
 const formatAmount = (amount, currency = 'XLM') => `${Number(amount).toLocaleString(undefined, { maximumFractionDigits: 7 })} ${currency}`;
 const params = new URLSearchParams(location.hash.slice(1));
 const qrToken = params.get('qr');
@@ -28,6 +28,7 @@ function walletDetails(intent) {
   el('wallet-amount').textContent = formatAmount(amount);
   el('address').textContent = walletAddress;
   el('memo').textContent = memo;
+  el('intent-deadline').textContent = new Date(intent.expiresAt).toLocaleString();
   const payment = new URLSearchParams({
     destination: walletAddress,
     amount: Number(amount).toFixed(7),
@@ -40,7 +41,7 @@ function walletDetails(intent) {
   history.replaceState(null, '', el('receipt-link').href);
   el('wallet').hidden = false;
   el('pay-form').hidden = true;
-  status('Payment details are ready.');
+  setStatus('Payment details are ready.');
 }
 
 function workerRequest(type, receipt) {
@@ -98,11 +99,11 @@ async function checkReceipt() {
   try {
     const receipt = await request('receipt', { token: receiptToken });
     if (receipt.pending) {
-      status('Payment is not confirmed yet. Try again after your wallet shows that it was sent.');
+      setStatus('Payment is not confirmed yet. Try again after your wallet shows that it was sent.');
       return;
     }
     el('latest-receipt').replaceChildren(receiptElement(receipt, 'article'));
-    status('Payment confirmed.');
+    setStatus('Payment confirmed.');
     try {
       await offlineStorage;
       renderSaved(await workerRequest('save', receipt));
@@ -110,7 +111,7 @@ async function checkReceipt() {
       el('offline-label').textContent = 'This receipt could not be saved for offline use.';
     }
   } catch (err) {
-    status(navigator.onLine ? err.message : 'You are offline. Saved receipts are available below.');
+    setStatus(navigator.onLine ? err.message : 'You are offline. Saved receipts are available below.');
   } finally {
     button.disabled = false;
   }
@@ -122,11 +123,11 @@ el('pay-form').addEventListener('submit', async (event) => {
   const button = event.currentTarget.querySelector('button');
   if (submission?.studentId !== studentId) submission = { studentId, key: crypto.randomUUID() };
   button.disabled = true;
-  status('Preparing your payment…');
+  setStatus('Preparing your payment…');
   try {
     walletDetails(await request('intent', { token: qrToken, studentId }, submission.key));
   } catch (err) {
-    status(navigator.onLine ? err.message : 'Connect to the internet to prepare a payment.');
+    setStatus(navigator.onLine ? err.message : 'Connect to the internet to prepare a payment.');
   } finally {
     button.disabled = false;
   }
@@ -136,9 +137,9 @@ el('check-receipt').addEventListener('click', checkReceipt);
 el('clear-receipts').addEventListener('click', async () => {
   try {
     renderSaved(await workerRequest('clear'));
-    status('Saved receipts cleared.');
+    setStatus('Saved receipts cleared.');
   } catch {
-    status('Could not clear saved receipts.');
+    setStatus('Could not clear saved receipts.');
   }
 });
 
@@ -154,17 +155,17 @@ window.addEventListener('beforeinstallprompt', (event) => {
 
 const offlineStorage = setupWorker();
 if (qrToken) {
-  status('Opening your payment link…');
+  setStatus('Opening your payment link…');
   request('link', { token: qrToken }).then(({ feeName, schoolName, amount }) => {
     el('fee-name').textContent = feeName;
     el('school-name').textContent = schoolName;
     el('amount').textContent = formatAmount(amount);
     el('pay-form').hidden = false;
-    status('Enter your student ID to pay this fee.');
-  }).catch(err => status(navigator.onLine ? err.message : 'Connect to the internet to open the payment link.'));
+    setStatus('Enter your student ID to pay this fee.');
+  }).catch(err => setStatus(navigator.onLine ? err.message : 'Connect to the internet to open the payment link.'));
 } else if (receiptToken) {
   const refresh = el('check-receipt');
   el('receipts').insertBefore(refresh, el('latest-receipt'));
   if (navigator.onLine) checkReceipt();
-  else status('You are offline. Saved receipts are available below.');
+  else setStatus('You are offline. Saved receipts are available below.');
 }
