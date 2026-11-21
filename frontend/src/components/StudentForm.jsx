@@ -15,6 +15,8 @@ export default function StudentForm({ student, onClose, onSave, onOptimisticUpda
     parentEmail: "",
     parentPhone: "",
     reminderOptOut: false,
+    paymentConfirmationOptOut: false,
+    disputeUpdateOptOut: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -28,7 +30,9 @@ export default function StudentForm({ student, onClose, onSave, onOptimisticUpda
         class: student.class || "",
         parentEmail: student.parentEmail || "",
         parentPhone: student.parentPhone || "",
-        reminderOptOut: student.reminderOptOut || false,
+        reminderOptOut: Boolean(student.reminderOptOut),
+        paymentConfirmationOptOut: Boolean(student.paymentConfirmationOptOut),
+        disputeUpdateOptOut: Boolean(student.disputeUpdateOptOut),
       });
     }
   }, [student]);
@@ -327,6 +331,18 @@ export default function StudentForm({ student, onClose, onSave, onOptimisticUpda
               </span>
             </label>
           </div>
+
+          <fieldset style={{ marginBottom: "1rem" }}>
+            <legend>Email preferences</legend>
+            <label style={{ display: "block" }}>
+              <input type="checkbox" name="paymentConfirmationOptOut" checked={formData.paymentConfirmationOptOut} onChange={handleChange} />
+              Disable payment confirmation emails
+            </label>
+            <label style={{ display: "block" }}>
+              <input type="checkbox" name="disputeUpdateOptOut" checked={formData.disputeUpdateOptOut} onChange={handleChange} />
+              Disable dispute update emails
+            </label>
+          </fieldset>
 
           <PaymentPlanForm
             student={student}

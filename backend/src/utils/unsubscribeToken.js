@@ -67,4 +67,56 @@ function verifyUnsubscribeToken(token, secret) {
   }
 }
 
-module.exports = { generateUnsubscribeToken, verifyUnsubscribeToken };
+const emailPreferenceFields = Object.freeze({
+  payment_reminder: 'reminderOptOut',
+  payment_confirmation: 'paymentConfirmationOptOut',
+  dispute_update: 'disputeUpdateOptOut',
+});
+
+function emailPreferenceField(type) {
+  return Object.hasOwn(emailPreferenceFields, type) ? emailPreferenceFields[type] : null;
+}
+
+function signEmailPreference(userId, type, timestamp, secret) {
+  return crypto.createHmac('sha256', secret)
+    .update(`${userId}:${type}:${timestamp}`).digest('base64url');
+}
+
+function generateEmailUnsubscribeToken(studentId, schoolId, type, secret) {
+  if (!emailPreferenceField(type)) throw new TypeError('Invalid email type');
+  const userId = Buffer.from(JSON.stringify([schoolId, studentId])).toString('base64url');
+  const timestamp = Math.floor(Date.now() / 1000);
+  return `${userId}.${timestamp}.${signEmailPreference(userId, type, timestamp, secret)}`;
+}
+
+function verifyEmailUnsubscribeToken(token, type, secret) {
+  if (typeof token !== 'string' || token.length > 1024 || !emailPreferenceField(type)) return null;
+  const match = /^([A-Za-z0-9_-]+)\.([1-9][0-9]{0,11})\.([A-Za-z0-9_-]{43})$/.exec(token);
+  if (!match) return null;
+  const [, userId, timestamp, signature] = match;
+  const age = Math.floor(Date.now() / 1000) - Number(timestamp);
+  if (age < 0 || age > TOKEN_EXPIRY_DAYS * 86400) return null;
+  const expected = signEmailPreference(userId, type, timestamp, secret);
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  try {
+    const [schoolId, studentId] = JSON.parse(Buffer.from(userId, 'base64url').toString());
+    if (typeof schoolId === 'string' && schoolId && typeof studentId === 'string' && studentId) {
+      return { schoolId, studentId };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function emailUnsubscribeUrl(studentId, schoolId, type, config) {
+  const url = new URL('/unsubscribe', config.APP_URL || 'http://localhost:5000');
+  url.searchParams.set('token', generateEmailUnsubscribeToken(studentId, schoolId, type, config.EMAIL_UNSUBSCRIBE_SECRET || config.JWT_SECRET));
+  url.searchParams.set('type', type);
+  return url.href;
+}
+
+module.exports = {
+  generateUnsubscribeToken, verifyUnsubscribeToken, emailPreferenceField,
+  generateEmailUnsubscribeToken, verifyEmailUnsubscribeToken, emailUnsubscribeUrl,
+};

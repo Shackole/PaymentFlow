@@ -447,6 +447,10 @@ async function updateStudent(req, res, next) {
       update.feeAmount = amount.value.toNumber();
     }
     if (reminderOptOut !== undefined) update.reminderOptOut = Boolean(reminderOptOut);
+    for (const field of ['paymentConfirmationOptOut', 'disputeUpdateOptOut']) {
+      if (req.body[field] === undefined) continue;
+      update[field] = req.body[field];
+    }
     if (graduatedAt !== undefined) update.graduatedAt = graduatedAt;
 
     const student = await Student.findOneAndUpdate(

@@ -13,7 +13,7 @@
 // Must be set before app is loaded
 process.env.MONGO_URI            = 'mongodb://localhost:27017/test';
 process.env.SCHOOL_WALLET_ADDRESS = 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5';
-process.env.JWT_SECRET = 'test-jwt-secret-1234567890abcdef';
+process.env.JWT_SECRET = 'test-secret-32-chars-xxxxxxxxxxx';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -235,7 +235,7 @@ describe('GET /api/reminders/unsubscribe — XSS regression (stored XSS via stud
 
     const token = makeToken();
     const res = await request(app)
-      .get(`/api/reminders/unsubscribe?token=${token}`)
+      .get(`/api/reminders/unsubscribe?token=${encodeURIComponent(token)}`)
       .set('X-School-ID', SCHOOL_ID);
 
     expect(res.status).toBe(200);
@@ -256,7 +256,7 @@ describe('GET /api/reminders/unsubscribe — XSS regression (stored XSS via stud
 
     const token = makeToken();
     const res = await request(app)
-      .get(`/api/reminders/unsubscribe?token=${token}`)
+      .get(`/api/reminders/unsubscribe?token=${encodeURIComponent(token)}`)
       .set('X-School-ID', SCHOOL_ID);
 
     expect(res.status).toBe(200);
@@ -271,7 +271,7 @@ describe('GET /api/reminders/unsubscribe — XSS regression (stored XSS via stud
 
     const token = makeToken();
     const res = await request(app)
-      .get(`/api/reminders/unsubscribe?token=${token}`)
+      .get(`/api/reminders/unsubscribe?token=${encodeURIComponent(token)}`)
       .set('X-School-ID', SCHOOL_ID);
 
     expect(res.status).toBe(200);
@@ -286,7 +286,7 @@ describe('GET /api/reminders/unsubscribe — XSS regression (stored XSS via stud
 
     const token = makeToken();
     const res = await request(app)
-      .get(`/api/reminders/unsubscribe?token=${token}`)
+      .get(`/api/reminders/unsubscribe?token=${encodeURIComponent(token)}`)
       .set('X-School-ID', SCHOOL_ID);
 
     expect(res.status).toBe(200);
@@ -300,7 +300,7 @@ describe('GET /api/reminders/unsubscribe — XSS regression (stored XSS via stud
 
     const token = makeToken();
     const res = await request(app)
-      .get(`/api/reminders/unsubscribe?token=${token}`)
+      .get(`/api/reminders/unsubscribe?token=${encodeURIComponent(token)}`)
       .set('X-School-ID', SCHOOL_ID);
 
     expect(res.status).toBe(200);

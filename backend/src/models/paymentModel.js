@@ -332,7 +332,7 @@ paymentSchema.post('save', async function () {
       });
     }
 
-    if (student && student.parentEmail) {
+    if (student && student.parentEmail && !student.paymentConfirmationOptOut) {
       try {
         const emailService = require('../services/emailService');
         // Use cumulative totalPaid for accurate remaining balance (issue #1031)
