@@ -187,6 +187,7 @@ app.use('/api/schools', schoolRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/fees', feeRoutes);
+app.use('/api/parent-pay', require('./routes/parentPaymentRoutes'));
 app.use('/api/reports', reportRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/disputes', disputeRoutes);

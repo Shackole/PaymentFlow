@@ -200,3 +200,5 @@ export const deleteSourceValidationRule = (id, schoolId) =>
 // Fee adjustment helpers
 export const getFeeAdjustmentAffectedCount = (ruleId, schoolId) =>
   api.get(`/fee-adjustments/${ruleId}/affected-count`, { headers: { "X-School-ID": schoolId } });
+
+export const createFeePaymentQr = (feeId) => api.post(`/parent-pay/fees/${encodeURIComponent(feeId)}/qr`);

@@ -98,10 +98,18 @@ const nextConfig = {
   async rewrites() {
     return [
       { source: '/api/:path*', destination: `${BACKEND_ORIGIN}/api/:path*` },
+      { source: '/pay', destination: '/parent-pay/index.html' },
     ];
   },
   async headers() {
     return [
+      {
+        source: '/parent-pay/sw.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/pay' },
+          { key: 'Cache-Control', value: 'no-cache' },
+        ],
+      },
       {
         // Apply security headers to all routes
         source: '/(.*)',
